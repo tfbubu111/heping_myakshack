@@ -50,11 +50,23 @@ spec:
             cd /etc/cni/net.d
             while [ 1 ]
             do
-              TGT=`ls -1 *.conflist | head -n 1`
-              if [ ! -z "$TGT" ]; then
-                oldhash=`md5sum "$TGT" | cut -f 1 -d " "`
+              TGT=`ls -1 *.conflist | head -n 1` //拿到输出10-azure.conflist并赋值
+              if [ ! -z "$TGT" ]; then   //判断string 长度是否为0
+                oldhash=`md5sum "$TGT" | cut -f 1 -d " "`  
+                //拿到hash值
+                //root@aks-nodepool1-16738178-vmss00000E:/etc/cni/net.d# md5sum "$TGT"
+                //18a7a89fe41375105b26fdb4467e76c4  10-azure.conflist
+                //root@aks-nodepool1-16738178-vmss00000E:/etc/cni/net.d#  oldhash=`md5sum "$TGT" | cut -f 1 -d " "`
+                //18a7a89fe41375105b26fdb4467e76c4
                 <"$TGT" jq --slurpfile quickack /mnt/cfg/quickack.json '.plugins |= (.|map(select(.type!="quickack"))) + $quickack' >"${TGT}.new"
                 newhash=`md5sum "${TGT}.new" | cut -f 1 -d " "`
+//--slurpfile variable-name filename:
+这个选项会读取名为 filename 文件里面所有的 JSON 文本并将解析后的所有 JSON 组成一个 array 作为名为 variable-name 的全局变量的值。
+如果以 --argfile foo bar 运行 jq, 那么在程序中变量 $foo 就是一个 array，array 中的每个元素都对应着文件 bar 中的 JSON 文本。
+
+
+
+                
                 if [ "$oldhash" != "$newhash" ]; then
                   cp "$TGT" "${TGT}.backup"
                   mv "${TGT}.new" "$TGT"
